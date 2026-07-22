@@ -26,21 +26,21 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             val currentCategories = db.categoryDao().getAllCategoriesSync() // need to add this
             if (currentCategories.isEmpty()) {
                 val incomeCategories = listOf(
-                    Category(name = "Salary", type = TransactionType.INCOME, color = 0xFF4CAF50.toInt()),
-                    Category(name = "Freelance", type = TransactionType.INCOME, color = 0xFF8BC34A.toInt()),
-                    Category(name = "Investments", type = TransactionType.INCOME, color = 0xFF009688.toInt())
+                    Category(name = "Salary", type = TransactionType.INCOME, color = 0xFF4CAF50.toInt(), iconName = "Payments"),
+                    Category(name = "Freelance", type = TransactionType.INCOME, color = 0xFF8BC34A.toInt(), iconName = "Work"),
+                    Category(name = "Investments", type = TransactionType.INCOME, color = 0xFF009688.toInt(), iconName = "Savings")
                 )
                 val expenseCategories = listOf(
-                    Category(name = "Groceries", type = TransactionType.EXPENSE, color = 0xFFE91E63.toInt()),
-                    Category(name = "Rent", type = TransactionType.EXPENSE, color = 0xFFF44336.toInt()),
-                    Category(name = "Utilities", type = TransactionType.EXPENSE, color = 0xFFFF9800.toInt()),
-                    Category(name = "Entertainment", type = TransactionType.EXPENSE, color = 0xFF9C27B0.toInt()),
-                    Category(name = "Transport", type = TransactionType.EXPENSE, color = 0xFF3F51B5.toInt())
+                    Category(name = "Groceries", type = TransactionType.EXPENSE, color = 0xFFE91E63.toInt(), iconName = "ShoppingCart"),
+                    Category(name = "Rent", type = TransactionType.EXPENSE, color = 0xFFF44336.toInt(), iconName = "Home"),
+                    Category(name = "Utilities", type = TransactionType.EXPENSE, color = 0xFFFF9800.toInt(), iconName = "Lightbulb"),
+                    Category(name = "Entertainment", type = TransactionType.EXPENSE, color = 0xFF9C27B0.toInt(), iconName = "Movie"),
+                    Category(name = "Transport", type = TransactionType.EXPENSE, color = 0xFF3F51B5.toInt(), iconName = "DirectionsCar")
                 )
                 
                 val transferCategories = listOf(
-                    Category(name = "Bank to Cash", type = TransactionType.TRANSFER, color = 0xFF607D8B.toInt()),
-                    Category(name = "Cash to Bank", type = TransactionType.TRANSFER, color = 0xFF795548.toInt())
+                    Category(name = "Bank to Cash", type = TransactionType.TRANSFER, color = 0xFF607D8B.toInt(), iconName = "AccountBalance"),
+                    Category(name = "Cash to Bank", type = TransactionType.TRANSFER, color = 0xFF795548.toInt(), iconName = "AccountBalance")
                 )
                 
                 val allCats = incomeCategories + expenseCategories + transferCategories
@@ -96,9 +96,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         initialValue = emptyList()
     )
 
-    fun addCategory(name: String, type: TransactionType, parentId: Int? = null, color: Int = 0xFF6200EE.toInt()) {
+    fun addCategory(name: String, type: TransactionType, parentId: Int? = null, color: Int = 0xFF6200EE.toInt(), iconName: String = "Category") {
         viewModelScope.launch {
-            repository.insertCategory(Category(name = name, type = type, parentId = parentId, color = color))
+            repository.insertCategory(Category(name = name, type = type, parentId = parentId, color = color, iconName = iconName))
         }
     }
 

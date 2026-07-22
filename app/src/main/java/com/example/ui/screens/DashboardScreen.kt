@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.TransactionType
 import com.example.data.local.TransactionWithCategory
 import com.example.ui.ExpenseViewModel
+import com.example.ui.util.CategoryIcons
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -140,39 +141,13 @@ fun DashboardScreen(
                                     Icon(Icons.Default.Clear, contentDescription = "Clear")
                                 }
                             }
-                            var showMenu by remember { mutableStateOf(false) }
-                            Box {
-                                IconButton(onClick = { showMenu = true }) {
-                                    Icon(Icons.Default.AccountCircle, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary)
-                                }
-                                DropdownMenu(
-                                    expanded = showMenu,
-                                    onDismissRequest = { showMenu = false },
-                                    shape = RoundedCornerShape(16.dp),
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                                ) {
-                                    Text("Account", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.primary)
-                                    DropdownMenuItem(
-                                        text = { Text("Profile") },
-                                        onClick = { showMenu = false },
-                                        leadingIcon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
-                                        colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.onSurface)
-                                    )
-                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-                                    Text("App", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.primary)
-                                    DropdownMenuItem(
-                                        text = { Text("Categories") },
-                                        onClick = { showMenu = false; onNavigateToCategories() },
-                                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) },
-                                        colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.onSurface)
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Settings") },
-                                        onClick = { showMenu = false; onNavigateToSettings() },
-                                        leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                                        colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.onSurface)
-                                    )
-                                }
+                            IconButton(onClick = onNavigateToSettings) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = "Profile & Settings",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(32.dp)
+                                )
                             }
                         }
                     },
@@ -430,11 +405,7 @@ fun DashboardScreen(
 }@Composable
 fun RowScope.TransactionItemContent(tx: TransactionWithCategory, showDate: Boolean = false) {
     val formatter = NumberFormat.getCurrencyInstance()
-    val icon = when (tx.category.type) {
-        TransactionType.INCOME -> Icons.Default.Payments
-        TransactionType.EXPENSE -> Icons.Default.ShoppingBag
-        TransactionType.TRANSFER -> Icons.Default.CompareArrows
-    }
+    val icon = CategoryIcons.getIcon(tx.category.iconName)
     val tagColorBase = Color(
         red = (tx.category.name.hashCode() * 123 % 255) / 255f,
         green = (tx.category.name.hashCode() * 321 % 255) / 255f,
@@ -597,7 +568,7 @@ fun TransactionDetailsDialog(tx: TransactionWithCategory, onDismiss: () -> Unit,
                 
                 HorizontalDivider()
                 
-                DetailRow("Category", tx.category.name, Icons.Default.Category)
+                DetailRow("Category", tx.category.name, CategoryIcons.getIcon(tx.category.iconName))
                 DetailRow("Title", title.ifBlank { "No title" }, Icons.Default.Notes)
                 if (tx.transaction.description.isNotBlank()) {
                     DetailRow("Description", tx.transaction.description, Icons.Default.Notes)

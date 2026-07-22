@@ -20,7 +20,7 @@ class Converters {
     fun toTransactionType(value: String) = enumValueOf<TransactionType>(value)
 }
 
-@Database(entities = [Category::class, Transaction::class], version = 3, exportSchema = false)
+@Database(entities = [Category::class, Transaction::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao

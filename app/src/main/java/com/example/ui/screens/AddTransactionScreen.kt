@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,19 +11,21 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.data.local.TransactionType
 import com.example.ui.ExpenseViewModel
+import com.example.ui.util.CategoryIcons
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -75,9 +79,12 @@ fun AddTransactionScreen(
         else -> listOf("Cash")
     }
     
-    LaunchedEffect(account) {
+    LaunchedEffect(account, type) {
         if (paymentMethod !in paymentMethods) {
             paymentMethod = paymentMethods.firstOrNull() ?: "Cash"
+        }
+        if (type == TransactionType.TRANSFER && toAccount == account) {
+            toAccount = accounts.firstOrNull { it != account } ?: "Bank"
         }
     }
     
@@ -99,7 +106,11 @@ fun AddTransactionScreen(
                 title = { Text("Add Transaction") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        FormLeadingIcon(
+                            icon = Icons.AutoMirrored.Filled.ArrowBack,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -202,7 +213,7 @@ fun AddTransactionScreen(
                 onValueChange = { title = it },
                 label = { Text("Title") },
                 placeholder = { Text("e.g. Grocery Shopping") },
-                leadingIcon = { Icon(Icons.Default.Title, contentDescription = null) },
+                leadingIcon = { FormLeadingIcon(icon = Icons.Default.Notes) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -211,16 +222,30 @@ fun AddTransactionScreen(
 
             // Category Selection (If Expense or Income)
             if (type != TransactionType.TRANSFER) {
+                val selectedCat = availableCategories.find { it.id == selectedCategoryId }
+                val getCategoryDisplayName: (com.example.data.local.Category?) -> String = { cat ->
+                    if (cat == null) "Select Category"
+                    else if (cat.parentId != null) {
+                        val parent = categories.find { it.id == cat.parentId }
+                        if (parent != null) "${parent.name} › ${cat.name}" else cat.name
+                    } else cat.name
+                }
                 ExposedDropdownMenuBox(
                     expanded = categoryExpanded,
                     onExpandedChange = { categoryExpanded = !categoryExpanded }
                 ) {
                     OutlinedTextField(
-                        value = availableCategories.find { it.id == selectedCategoryId }?.name ?: "Select Category",
+                        value = getCategoryDisplayName(selectedCat),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Category") },
-                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) },
+                        leadingIcon = {
+                            FormLeadingIcon(
+                                icon = CategoryIcons.getIcon(selectedCat?.iconName),
+                                tint = selectedCat?.let { Color(it.color) } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                                containerColor = selectedCat?.let { Color(it.color).copy(alpha = 0.15f) } ?: MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                        },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -233,9 +258,22 @@ fun AddTransactionScreen(
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         availableCategories.forEach { cat ->
+                            val isSub = cat.parentId != null
                             DropdownMenuItem(
-                                text = { Text(cat.name, style = MaterialTheme.typography.bodyLarge) },
-                                leadingIcon = { Icon(Icons.Default.Category, contentDescription = null, tint = Color(cat.color)) },
+                                text = { 
+                                    Text(
+                                        text = getCategoryDisplayName(cat), 
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = if (isSub) FontWeight.Normal else FontWeight.SemiBold
+                                    ) 
+                                },
+                                leadingIcon = {
+                                    FormLeadingIcon(
+                                        icon = CategoryIcons.getIcon(cat.iconName),
+                                        tint = Color(cat.color),
+                                        containerColor = Color(cat.color).copy(alpha = 0.15f)
+                                    )
+                                },
                                 onClick = {
                                     selectedCategoryId = cat.id
                                     categoryExpanded = false
@@ -262,7 +300,7 @@ fun AddTransactionScreen(
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("From") },
-                                leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
+                                leadingIcon = { FormLeadingIcon(icon = Icons.Default.AccountBalance) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -277,6 +315,7 @@ fun AddTransactionScreen(
                                 accounts.forEach { acc ->
                                     DropdownMenuItem(
                                         text = { Text(acc, style = MaterialTheme.typography.bodyLarge) },
+                                        leadingIcon = { FormLeadingIcon(icon = Icons.Default.AccountBalance) },
                                         onClick = {
                                             account = acc
                                             accountExpanded = false
@@ -296,7 +335,7 @@ fun AddTransactionScreen(
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("To") },
-                                leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
+                                leadingIcon = { FormLeadingIcon(icon = Icons.Default.AccountBalance) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = toAccountExpanded) },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -308,9 +347,10 @@ fun AddTransactionScreen(
                                 onDismissRequest = { toAccountExpanded = false },
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                accounts.forEach { acc ->
+                                accounts.filter { it != account }.forEach { acc ->
                                     DropdownMenuItem(
                                         text = { Text(acc, style = MaterialTheme.typography.bodyLarge) },
+                                        leadingIcon = { FormLeadingIcon(icon = Icons.Default.AccountBalance) },
                                         onClick = {
                                             toAccount = acc
                                             toAccountExpanded = false
@@ -335,7 +375,7 @@ fun AddTransactionScreen(
                                 if (type == TransactionType.INCOME) "Account (Credit to)" else "Account (Debit from)"
                             )
                         },
-                        leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
+                        leadingIcon = { FormLeadingIcon(icon = Icons.Default.AccountBalance) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -350,6 +390,7 @@ fun AddTransactionScreen(
                         accounts.forEach { acc ->
                             DropdownMenuItem(
                                 text = { Text(acc, style = MaterialTheme.typography.bodyLarge) },
+                                leadingIcon = { FormLeadingIcon(icon = Icons.Default.AccountBalance) },
                                 onClick = {
                                     account = acc
                                     accountExpanded = false
@@ -376,7 +417,7 @@ fun AddTransactionScreen(
                         readOnly = true,
                         enabled = false,
                         label = { Text("Date") },
-                        leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
+                        leadingIcon = { FormLeadingIcon(icon = Icons.Default.CalendarToday) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = CircleShape,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -398,7 +439,7 @@ fun AddTransactionScreen(
                         readOnly = true,
                         enabled = false,
                         label = { Text("Time") },
-                        leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) },
+                        leadingIcon = { FormLeadingIcon(icon = Icons.Default.Schedule) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = CircleShape,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -422,7 +463,7 @@ fun AddTransactionScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Payment Method") },
-                        leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
+                        leadingIcon = { FormLeadingIcon(icon = Icons.Default.Payments) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = paymentExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -437,7 +478,7 @@ fun AddTransactionScreen(
                         paymentMethods.forEach { pm ->
                             DropdownMenuItem(
                                 text = { Text(pm, style = MaterialTheme.typography.bodyLarge) },
-                                leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
+                                leadingIcon = { FormLeadingIcon(icon = Icons.Default.Payments) },
                                 onClick = {
                                     paymentMethod = pm
                                     paymentExpanded = false
@@ -454,7 +495,7 @@ fun AddTransactionScreen(
                 onValueChange = { tags = it },
                 label = { Text("Tags (comma separated)") },
                 placeholder = { Text("e.g. food, dinner") },
-                leadingIcon = { Icon(Icons.Default.Label, contentDescription = null) },
+                leadingIcon = { FormLeadingIcon(icon = Icons.Default.Label) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = CircleShape
@@ -466,7 +507,7 @@ fun AddTransactionScreen(
                 onValueChange = { description = it },
                 label = { Text("Description") },
                 placeholder = { Text("Add extra details...") },
-                leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
+                leadingIcon = { FormLeadingIcon(icon = Icons.Default.Description) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
@@ -502,7 +543,7 @@ fun AddTransactionScreen(
                 shape = CircleShape,
                 enabled = amountStr.isNotBlank() && amountStr.toDoubleOrNull() != null && (type == TransactionType.TRANSFER || selectedCategoryId != null) && title.isNotBlank()
             ) {
-                Icon(Icons.Default.Check, contentDescription = null)
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Save Transaction", style = MaterialTheme.typography.titleMedium)
             }
@@ -558,5 +599,27 @@ fun AddTransactionScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun FormLeadingIcon(
+    icon: ImageVector,
+    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest
+) {
+    Box(
+        modifier = Modifier
+            .padding(start = 6.dp)
+            .size(36.dp)
+            .background(containerColor, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }

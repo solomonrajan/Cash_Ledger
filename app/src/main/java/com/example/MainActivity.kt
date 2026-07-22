@@ -55,7 +55,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("settings") {
                             SettingsScreen(
-                                onBack = { navController.navigateUp() }
+                                onBack = { navController.navigateUp() },
+                                onNavigateToCategories = { navController.navigate("categories") }
                             )
                         }
                     }

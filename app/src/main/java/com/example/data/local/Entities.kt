@@ -10,7 +10,8 @@ data class Category(
     val name: String,
     val type: TransactionType,
     val parentId: Int? = null,
-    val color: Int = 0xFF6200EE.toInt()
+    val color: Int = 0xFF6200EE.toInt(),
+    val iconName: String = "Category"
 )
 
 @Entity(
