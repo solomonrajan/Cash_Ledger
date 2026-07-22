@@ -62,8 +62,6 @@ jobs:
           name: "Build-${{ steps.vars.outputs.sha_short }}"
           generate_release_notes: true
           files: |
-            app/build/outputs/apk/${{ env.BUILD_TYPE }}/app-armeabi-v7a-${{ env.BUILD_TYPE }}.apk
-            app/build/outputs/apk/${{ env.BUILD_TYPE }}/app-arm64-v8a-${{ env.BUILD_TYPE }}.apk
-            app/build/outputs/apk/${{ env.BUILD_TYPE }}/app-universal-${{ env.BUILD_TYPE }}.apk
+            app/build/outputs/apk/${{ env.BUILD_TYPE }}/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
