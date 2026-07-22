@@ -63,6 +63,6 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            app/build/outputs/apk/${{ env.BUILD_TYPE }}/*.apk
+            app/build/outputs/apk/**/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
