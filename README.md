@@ -49,7 +49,7 @@ Cash Ledger/
 
 You can download the latest version of Cash Ledger directly from our repository:
 
-[<img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" width="200">](https://github.com/)
+[<img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" width="200">](https://github.com/solomonrajan/Cash_Ledger/releases)
 
 ## 💻 6. Run Locally
 
@@ -71,6 +71,7 @@ You can download the latest version of Cash Ledger directly from our repository:
 ## 🏆 8. Credits
 
 This project was made possible with the help of the following amazing tools, platforms, and technologies:
+
 - **[Google Gemini](https://gemini.google.com/):** The powerful, next-generation engine utilized during the development and structuring process.
 - **[Google Antigravity](https://deepmind.google/):** The advanced agentic framework that assisted in constructing and refining this project.
 - **[Google Fonts](https://fonts.google.com/):** Providing the beautiful, modern typography used throughout the interface.
