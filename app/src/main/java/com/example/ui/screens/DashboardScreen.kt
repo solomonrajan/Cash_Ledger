@@ -379,24 +379,39 @@ fun DashboardScreen(
                     item {
                         Text(
                             text = date,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
                             fontFamily = GoogleSansCode,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp)
                         )
-                        Column(
+                        ElevatedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .animateContentSize(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.elevatedCardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
                         ) {
-                            txs.forEach { tx ->
-                                TransactionItem(tx)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateContentSize()
+                            ) {
+                                txs.forEachIndexed { index, tx ->
+                                    TransactionRowItem(tx = tx)
+                                    if (index < txs.size - 1) {
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                                            modifier = Modifier.padding(start = 80.dp, end = 16.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
@@ -493,35 +508,38 @@ fun RowScope.TransactionItemContent(tx: TransactionWithCategory, showDate: Boole
 }
 
 @Composable
-fun TransactionItem(tx: TransactionWithCategory) {
-    var isVisible by remember { mutableStateOf(false) }
+fun TransactionRowItem(tx: TransactionWithCategory) {
     var showDialog by remember { mutableStateOf(false) }
-    LaunchedEffect(tx.transaction.id) {
-        isVisible = true
-    }
-    
+
     if (showDialog) {
         TransactionDetailsDialog(tx = tx, onDismiss = { showDialog = false }, onEdit = { /* TODO */ })
     }
 
-    androidx.compose.animation.AnimatedVisibility(
-        visible = isVisible,
-        enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + 
-                androidx.compose.animation.slideInVertically(initialOffsetY = { 50 }, animationSpec = androidx.compose.animation.core.tween(300))
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showDialog = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .animateContentSize(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        val itemBgColor = if (tx.transaction.type == TransactionType.INCOME) com.example.ui.theme.IncomeGreen.copy(alpha = 0.05f) else com.example.ui.theme.ExpenseRed.copy(alpha = 0.05f)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { showDialog = true }
-                .background(itemBgColor)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .animateContentSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TransactionItemContent(tx = tx)
-        }
+        TransactionItemContent(tx = tx)
+    }
+}
+
+@Composable
+fun TransactionItem(tx: TransactionWithCategory) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+    ) {
+        TransactionRowItem(tx = tx)
     }
 }
 
