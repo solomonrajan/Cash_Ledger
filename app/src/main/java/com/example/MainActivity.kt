@@ -12,10 +12,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
+import com.example.data.local.UserPreferencesManager
 import com.example.ui.ExpenseViewModel
 import com.example.ui.screens.AddTransactionScreen
 import com.example.ui.screens.CategoriesScreen
 import com.example.ui.screens.DashboardScreen
+import com.example.ui.screens.InitialSetupScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.theme.AppTheme
 
@@ -24,15 +30,37 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            val context = LocalContext.current
+            val prefsManager = remember(context) { UserPreferencesManager(context) }
+            val themeMode by prefsManager.themeModeFlow.collectAsState()
+            val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val useDarkTheme = when (themeMode) {
+                "dark" -> true
+                "light" -> false
+                else -> systemInDark
+            }
+
+            AppTheme(darkTheme = useDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
                     val viewModel: ExpenseViewModel = viewModel()
-                    
-                    NavHost(navController = navController, startDestination = "dashboard") {
+
+                    val startDestination = if (prefsManager.isSetupCompleted) "dashboard" else "setup"
+
+                    NavHost(navController = navController, startDestination = startDestination) {
+                        composable("setup") {
+                            InitialSetupScreen(
+                                viewModel = viewModel,
+                                onSetupComplete = {
+                                    navController.navigate("dashboard") {
+                                        popUpTo("setup") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
                         composable("dashboard") {
                             DashboardScreen(
                                 viewModel = viewModel,
@@ -56,7 +84,13 @@ class MainActivity : ComponentActivity() {
                         composable("settings") {
                             SettingsScreen(
                                 onBack = { navController.navigateUp() },
-                                onNavigateToCategories = { navController.navigate("categories") }
+                                onNavigateToCategories = { navController.navigate("categories") },
+                                onReRunSetup = {
+                                    prefsManager.isSetupCompleted = false
+                                    navController.navigate("setup") {
+                                        popUpTo("dashboard") { inclusive = true }
+                                    }
+                                }
                             )
                         }
                     }

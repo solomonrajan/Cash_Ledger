@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.data.local.UserPreferencesManager
 import com.example.data.local.TransactionType
 import com.example.ui.ExpenseViewModel
 import com.example.ui.util.CategoryIcons
@@ -46,14 +47,21 @@ fun AddTransactionScreen(
     viewModel: ExpenseViewModel,
     onBack: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefsManager = remember { UserPreferencesManager(context) }
+
     var title by remember { mutableStateOf("") }
     var amountStr by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var tags by remember { mutableStateOf("") }
-    var paymentMethod by remember { mutableStateOf("Cash") }
+    
+    val accounts = remember { prefsManager.getAccounts().map { it.name }.ifEmpty { listOf("Cash", "Wallet", "Bank") } }
+    val paymentMethods = remember { prefsManager.getPaymentMethods().map { it.name }.ifEmpty { listOf("Cash", "UPI", "Visa", "Mastercard", "Bank Transfer") } }
+
+    var paymentMethod by remember { mutableStateOf(paymentMethods.firstOrNull() ?: "Cash") }
     var type by remember { mutableStateOf(TransactionType.EXPENSE) }
-    var account by remember { mutableStateOf("Cash") }
-    var toAccount by remember { mutableStateOf("Bank") }
+    var account by remember { mutableStateOf(accounts.firstOrNull() ?: "Cash") }
+    var toAccount by remember { mutableStateOf(accounts.getOrNull(1) ?: accounts.firstOrNull() ?: "Bank") }
     
     var categoryExpanded by remember { mutableStateOf(false) }
     var paymentExpanded by remember { mutableStateOf(false) }
@@ -71,20 +79,12 @@ fun AddTransactionScreen(
     val availableCategories = categories.filter { it.type == type }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
     
-    val accounts = listOf("Cash", "Wallet", "Bank")
-    val paymentMethods = when(account) {
-        "Cash" -> listOf("Cash")
-        "Wallet" -> listOf("Wallet")
-        "Bank" -> listOf("UPI", "Visa", "Mastercard", "Rupay", "Bank Transfer")
-        else -> listOf("Cash")
-    }
-    
     LaunchedEffect(account, type) {
         if (paymentMethod !in paymentMethods) {
             paymentMethod = paymentMethods.firstOrNull() ?: "Cash"
         }
         if (type == TransactionType.TRANSFER && toAccount == account) {
-            toAccount = accounts.firstOrNull { it != account } ?: "Bank"
+            toAccount = accounts.firstOrNull { it != account } ?: account
         }
     }
     
@@ -174,7 +174,7 @@ fun AddTransactionScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = NumberFormat.getCurrencyInstance().currency?.symbol ?: "$",
+                            text = prefsManager.currencySymbol,
                             style = MaterialTheme.typography.displayMedium,
                             color = typeColor,
                             fontWeight = FontWeight.Bold

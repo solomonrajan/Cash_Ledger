@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Category
@@ -22,6 +24,10 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Edit
@@ -48,6 +54,8 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+import com.example.data.local.UserPreferencesManager
+import com.example.utils.CurrencyUtils
 import com.example.ui.theme.GoogleSansCode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,15 +66,12 @@ fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToCategories: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefsManager = remember { UserPreferencesManager(context) }
     val transactions by viewModel.transactions.collectAsState()
     
     var searchQuery by remember { mutableStateOf("") }
-    var placeholderText by remember { mutableStateOf("Cash Ledger") }
-    
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(3000)
-        placeholderText = "Search transactions"
-    }
+    var placeholderText by remember { mutableStateOf("Search transactions...") }
 
     var selectedDateFilter by remember { mutableStateOf("This Month") }
     var selectedTypeFilter by remember { mutableStateOf("All") }
@@ -270,88 +275,134 @@ fun DashboardScreen(
             }
 
             item {
-                // Expressive Net Worth Card
-                Column(
+                // Sleek & Compact Net Worth Summary
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                RoundedCornerShape(32.dp)
-                            )
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(16.dp)
                     ) {
-                        Text(
-                            "Net Worth",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            formatter.format(balance),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontFamily = GoogleSansCode
-                        )
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(20.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.ArrowDownward, contentDescription = null, tint = com.example.ui.theme.IncomeGreen, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Income", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(formatter.format(income), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = com.example.ui.theme.IncomeGreen, fontFamily = GoogleSansCode)
+                            Column {
+                                Text(
+                                    "Net Worth",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    CurrencyUtils.formatAmount(balance, prefsManager.currencySymbol),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontFamily = GoogleSansCode
+                                )
                             }
-                            
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(20.dp)
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = com.example.ui.theme.ExpenseRed, modifier = Modifier.size(16.dp))
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Receipt,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Expense", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                    Text(
+                                        "${filteredTransactions.size} txns",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(formatter.format(expense), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = com.example.ui.theme.ExpenseRed, fontFamily = GoogleSansCode)
                             }
                         }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        val maxExpense = filteredTransactions.filter { it.transaction.type == TransactionType.EXPENSE }.maxOfOrNull { it.transaction.amount } ?: 0.0
-                        
-                        Column(
-                            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(horizontalAlignment = Alignment.Start) {
-                                    Text("Largest Expense", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(formatter.format(maxExpense), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontFamily = GoogleSansCode)
+                            Surface(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.ArrowDownward,
+                                        contentDescription = null,
+                                        tint = com.example.ui.theme.IncomeGreen,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            "Income",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            CurrencyUtils.formatAmount(income, prefsManager.currencySymbol),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = com.example.ui.theme.IncomeGreen,
+                                            fontFamily = GoogleSansCode
+                                        )
+                                    }
                                 }
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text("Transactions", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text("${filteredTransactions.size}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontFamily = GoogleSansCode)
+                            }
+
+                            Surface(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.ArrowUpward,
+                                        contentDescription = null,
+                                        tint = com.example.ui.theme.ExpenseRed,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            "Expense",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            CurrencyUtils.formatAmount(expense, prefsManager.currencySymbol),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = com.example.ui.theme.ExpenseRed,
+                                            fontFamily = GoogleSansCode
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -419,83 +470,96 @@ fun DashboardScreen(
     }
 }@Composable
 fun RowScope.TransactionItemContent(tx: TransactionWithCategory, showDate: Boolean = false) {
-    val formatter = NumberFormat.getCurrencyInstance()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefsManager = remember { UserPreferencesManager(context) }
     val icon = CategoryIcons.getIcon(tx.category.iconName)
-    val tagColorBase = Color(
-        red = (tx.category.name.hashCode() * 123 % 255) / 255f,
-        green = (tx.category.name.hashCode() * 321 % 255) / 255f,
-        blue = (tx.category.name.hashCode() * 213 % 255) / 255f
-    )
-    val isLight = MaterialTheme.colorScheme.surface.red > 0.5f
-    val tagBgColor = tagColorBase.copy(alpha = if (isLight) 0.2f else 0.4f)
-    val tagTextColor = if (isLight) tagColorBase.copy(alpha = 1f) else Color.White
-    val iconBgColor = when (tx.transaction.type) {
-        TransactionType.INCOME -> com.example.ui.theme.IncomeGreen
-        TransactionType.EXPENSE -> com.example.ui.theme.ExpenseRed
-        TransactionType.TRANSFER -> Color(0xFF2196F3)
-    }
-    val iconColor = Color.White
+
+    val categoryColor = Color(tx.category.color)
+    val iconBgColor = categoryColor.copy(alpha = 0.2f)
+    val iconColor = categoryColor
 
     Box(
-        modifier = Modifier.size(48.dp).background(iconBgColor, androidx.compose.foundation.shape.CircleShape),
+        modifier = Modifier
+            .size(44.dp)
+            .background(iconBgColor, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
     }
-    Spacer(modifier = Modifier.width(16.dp))
+    Spacer(modifier = Modifier.width(14.dp))
     Column(modifier = Modifier.weight(1f)) {
         Text(tx.category.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
         val title = tx.transaction.title
         val paymentMethod = tx.transaction.paymentMethod
         
         val desc = if (title.isNotBlank()) "${tx.category.type.name.lowercase(Locale.getDefault())} • $title" else tx.category.type.name.lowercase(Locale.getDefault())
-        Text(desc.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        Text(
+            desc.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             verticalAlignment = Alignment.CenterVertically, 
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             val formatStr = if (showDate) "MMM dd, yyyy • hh:mm a" else "hh:mm a"
             val timeStr = SimpleDateFormat(formatStr, Locale.getDefault()).format(Date(tx.transaction.dateMillis))
             Text(timeStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f), fontFamily = GoogleSansCode)
             
-            Box(modifier = Modifier.background(tagBgColor, androidx.compose.foundation.shape.CircleShape).padding(horizontal = 8.dp, vertical = 2.dp)) {
-                Text("#${tx.category.name.lowercase(Locale.getDefault()).replace(" ", "")}", style = MaterialTheme.typography.labelSmall, color = tagTextColor, fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier
+                    .background(categoryColor.copy(alpha = 0.15f), CircleShape)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    "#${tx.category.name.lowercase(Locale.getDefault()).replace(" ", "")}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = categoryColor,
+                    fontWeight = FontWeight.Bold
+                )
             }
             
-            Row(
-                modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, androidx.compose.foundation.shape.CircleShape).padding(horizontal = 8.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                val officialLogoUrl = when (paymentMethod) {
-                    "Visa" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png"
-                    "Mastercard" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png"
-                    "UPI" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/200px-UPI-Logo-vector.svg.png"
-                    "Rupay" -> "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Rupay-Logo.png/200px-Rupay-Logo.png"
-                    else -> null
-                }
-                
-                if (officialLogoUrl != null) {
-                    coil.compose.AsyncImage(
-                        model = officialLogoUrl,
-                        contentDescription = paymentMethod,
-                        modifier = Modifier.height(10.dp).widthIn(max = 24.dp),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                    )
-                    Text(paymentMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.Bold)
-                } else {
-                    val pmIcon = Icons.Default.Payments
-                    val pmColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    Icon(pmIcon, contentDescription = null, tint = pmColor, modifier = Modifier.size(10.dp))
-                    Text(paymentMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.Bold)
+            if (paymentMethod.isNotBlank()) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        val pmIcon = when (paymentMethod) {
+                            "Visa", "Mastercard", "Rupay", "Card" -> Icons.Default.CreditCard
+                            "UPI" -> Icons.Default.Send
+                            "Cash" -> Icons.Default.Payments
+                            "Bank", "Bank Transfer" -> Icons.Default.AccountBalance
+                            "Wallet" -> Icons.Default.AccountBalanceWallet
+                            else -> Icons.Default.Payments
+                        }
+                        Icon(
+                            imageVector = pmIcon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = paymentMethod,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
     }
     Text(
-        formatter.format(tx.transaction.amount),
+        CurrencyUtils.formatAmount(tx.transaction.amount, prefsManager.currencySymbol),
         color = when (tx.transaction.type) {
             TransactionType.INCOME -> com.example.ui.theme.IncomeGreen
             TransactionType.EXPENSE -> com.example.ui.theme.ExpenseRed
@@ -545,7 +609,8 @@ fun TransactionItem(tx: TransactionWithCategory) {
 
 @Composable
 fun TransactionDetailsDialog(tx: TransactionWithCategory, onDismiss: () -> Unit, onEdit: () -> Unit) {
-    val formatter = NumberFormat.getCurrencyInstance()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefsManager = remember { UserPreferencesManager(context) }
     val timeFormatter = SimpleDateFormat("EEEE, dd MMMM yyyy • hh:mm a", Locale.getDefault())
     val isIncome = tx.category.type == TransactionType.INCOME
     val isTransfer = tx.category.type == TransactionType.TRANSFER
@@ -576,7 +641,7 @@ fun TransactionDetailsDialog(tx: TransactionWithCategory, onDismiss: () -> Unit,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "$amountPrefix${formatter.format(tx.transaction.amount)}",
+                    text = "$amountPrefix${CurrencyUtils.formatAmount(tx.transaction.amount, prefsManager.currencySymbol)}",
                     style = MaterialTheme.typography.displaySmall,
                     color = amountColor,
                     fontWeight = FontWeight.Bold,

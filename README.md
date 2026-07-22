@@ -1,5 +1,10 @@
 # 🚀 Cash Ledger: The Future of Digital Finance Manager
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://www.android.com/)
+[![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple.svg)](https://kotlinlang.org/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/solomonrajan/Cash_Ledger/release.yml?branch=main)](https://github.com/solomonrajan/Cash_Ledger/actions)
+
 | 📑 Table of Contents                                                                           |
 | ---------------------------------------------------------------------------------------------- |
 | [🌟 1. Introduction](#1-introduction)                                                          |

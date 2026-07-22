@@ -44,21 +44,31 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import kotlinx.coroutines.launch
 
+import com.example.data.local.UserPreferencesManager
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onNavigateToCategories: () -> Unit = {}
+    onNavigateToCategories: () -> Unit = {},
+    onReRunSetup: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val prefsManager = remember { UserPreferencesManager(context) }
     val coroutineScope = rememberCoroutineScope()
     var backupStatus by remember { mutableStateOf("Ready") }
     var isBackingUp by remember { mutableStateOf(false) }
-    var userEmail by remember { mutableStateOf("solu.rajan@gmail.com") }
-    var userName by remember { mutableStateOf("Solu Rajan") }
+    var userEmail by remember { mutableStateOf(prefsManager.googleAccountEmail ?: "Local Mode (No Google Account)") }
+    var userName by remember { mutableStateOf(prefsManager.userName) }
 
     var dailyReminder by remember { mutableStateOf(true) }
-    var darkTheme by remember { mutableStateOf(false) }
+    val themeMode by prefsManager.themeModeFlow.collectAsState()
+    val isSystemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val isDarkActive = when (themeMode) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDark
+    }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -284,6 +294,16 @@ fun SettingsScreen(
             ) {
                 Column {
                     PixelSettingsItem(
+                        title = "Re-run Initial Setup Wizard",
+                        subtitle = "Re-configure user name, accounts, currency & Google link",
+                        icon = Icons.Default.Sync,
+                        onClick = onReRunSetup
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    PixelSettingsItem(
                         title = "Categories",
                         subtitle = "Manage expense and income categories",
                         icon = Icons.Default.Category,
@@ -295,9 +315,9 @@ fun SettingsScreen(
                     )
                     PixelSettingsItem(
                         title = "Accounts & Payment Methods",
-                        subtitle = "Cash, Wallet, UPI, Cards, Bank Transfer",
+                        subtitle = "${prefsManager.getAccounts().size} Accounts, ${prefsManager.getPaymentMethods().size} Payment Modes",
                         icon = Icons.Default.AccountBalance,
-                        onClick = { }
+                        onClick = onReRunSetup
                     )
                 }
             }
@@ -322,9 +342,9 @@ fun SettingsScreen(
                 Column {
                     PixelSettingsItem(
                         title = "Currency",
-                        subtitle = "Default currency ($ USD)",
+                        subtitle = "Active currency (${prefsManager.currencySymbol} ${prefsManager.currencyCode})",
                         icon = Icons.Default.Payments,
-                        onClick = { }
+                        onClick = onReRunSetup
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -343,10 +363,16 @@ fun SettingsScreen(
                     )
                     PixelSettingsSwitchItem(
                         title = "Dark Theme",
-                        subtitle = "Match system or force dark appearance",
+                        subtitle = when (themeMode) {
+                            "system" -> "Following device theme (${if (isSystemInDark) "Dark" else "Light"})"
+                            "dark" -> "Dark theme enabled"
+                            else -> "Light theme enabled"
+                        },
                         icon = Icons.Default.Palette,
-                        checked = darkTheme,
-                        onCheckedChange = { darkTheme = it }
+                        checked = isDarkActive,
+                        onCheckedChange = { checked ->
+                            prefsManager.themeMode = if (checked) "dark" else "light"
+                        }
                     )
                 }
             }
@@ -371,7 +397,7 @@ fun SettingsScreen(
                 Column {
                     PixelSettingsItem(
                         title = "App Info & Version",
-                        subtitle = "Expense Tracker v1.0.0 (Google Pixel Build)",
+                        subtitle = "Cash Ledger v1.0.0",
                         icon = Icons.Default.Info,
                         onClick = { }
                     )
