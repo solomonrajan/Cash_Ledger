@@ -22,6 +22,17 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
+      - name: Create missing files for build
+        run: |
+          if [ ! -f "debug.keystore" ]; then
+            echo "Generating debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          if [ ! -f "app/google-services.json" ]; then
+            echo "Generating mock google-services.json..."
+            echo '{"project_info": {"project_number": "123","firebase_url": "https://mock.firebaseio.com","project_id": "mock","storage_bucket": "mock.appspot.com"},"client": [{"client_info": {"mobilesdk_app_id": "1:123:android:123","android_client_info": {"package_name": "com.aistudio.expensetracker.paisa"}},"oauth_client": [],"api_key": [{"current_key": "mock"}],"services": {"appinvite_service": {"other_platform_oauth_client": []}}}]}' > app/google-services.json
+          fi
+
       - name: Build APKs
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -38,6 +49,7 @@ jobs:
             gradle assembleDebug
             echo "BUILD_TYPE=debug" >> $GITHUB_ENV
           fi
+
 
       - name: Get short SHA
         id: vars
