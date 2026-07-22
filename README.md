@@ -49,7 +49,7 @@ Cash Ledger/
 
 You can download the latest version of Cash Ledger directly from our repository:
 
-[![](https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png)](https://github.com/)
+[<img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" width="200">](https://github.com/)
 
 ## 💻 6. Run Locally
 
