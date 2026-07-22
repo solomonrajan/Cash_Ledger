@@ -1,22 +1,79 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# 🚀 Cash Ledger: The Future of Digital Finance Manager
 
-# Run and deploy your AI Studio app
+| 📑 Table of Contents                                                                           |
+| ---------------------------------------------------------------------------------------------- |
+| [🌟 1. Introduction](#1-introduction)                                                          |
+| [📱 2. App Details: What is Cash Ledger?](#2-app-details-what-is-cash-ledger)                  |
+| [👥 3. Target Demographic: For Whom It Is Useful](#3-target-demographic-for-whom-it-is-useful) |
+| [🌳 4. Source Code Tree](#4-source-code-tree)                                                  |
+| [📥 5. Download](#5-download)                                                                  |
+| [💻 6. Run Locally](#6-run-locally)                                                            |
+| [👨‍💻 7. Developer Notes](#7-developer-notes)                                                    |
+| [🏆 8. Credits](#8-credits)                                                                    |
 
-This contains everything you need to run your app locally.
+## 🌟 1. Introduction
 
-View your app in AI Studio: https://ai.studio/apps/3e4534da-57f5-4999-8de1-d9dce37e1b36
+Welcome to Cash Ledger, the next-generation ecosystem for your modern lifestyle.
 
-## Run Locally
+## 📱 2. App Details: What is Cash Ledger?
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+Here are all the details about the app. Cash Ledger is an advanced, high-performance Android application designed to track, manage, and elevate your monetary transactions. Built with cutting-edge technologies, it provides a seamless and futuristic user experience for all your monetary operations.
 
+## 👥 3. Target Demographic: For Whom It Is Useful
+
+This application is purposefully built for:
+
+- **Digital Nomads & Freelancers:** Needing robust tracking on the go.
+- **Tech-Savvy Individuals:** Looking for a modern, sleek interface.
+- **Small Business Owners:** Seeking an edge in everyday monetary management.
+
+## 🌳 4. Source Code Tree
+
+```text
+Cash Ledger/
+├── app/
+│   ├── src/
+│   │   └── main/
+│   │       ├── java/
+│   │       ├── res/
+│   │       └── AndroidManifest.xml
+│   └── build.gradle.kts
+├── gradle/
+├── .env.example
+├── build.gradle.kts
+├── gradle.properties
+└── settings.gradle.kts
+```
+
+## 📥 5. Download
+
+You can download the latest version of Cash Ledger directly from our repository:
+
+[![](https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png)](https://github.com/)
+
+## 💻 6. Run Locally
+
+**Prerequisites:** [Android Studio](https://developer.android.com/studio)
 
 1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
+2. Select **Open** and choose the directory containing this project.
+3. Allow Android Studio to resolve dependencies and build the project.
+4. Create a file named `.env` in the project directory and set your API key in that file (see `.env.example`).
 5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
-7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
+6. Run the app on an emulator or physical device.
+
+## 👨‍💻 7. Developer Notes
+
+- **Language:** Kotlin (Android)
+- **Developer:** Solomon Rajan from Kerala
+- **Note:** This is basically an initial vibe code app, future releases will try to implement more options.
+
+## 🏆 8. Credits
+
+This project was made possible with the help of the following amazing tools, platforms, and technologies:
+- **[Google Gemini](https://gemini.google.com/):** The powerful, next-generation engine utilized during the development and structuring process.
+- **[Google Antigravity](https://deepmind.google/):** The advanced agentic framework that assisted in constructing and refining this project.
+- **[Google Fonts](https://fonts.google.com/):** Providing the beautiful, modern typography used throughout the interface.
+- **[Google Icons](https://fonts.google.com/icons):** Supplying the sleek and universally recognizable material iconography.
+- **[Windows 11](https://www.microsoft.com/windows):** The premier operating system environment used during development.
+- **[GitHub](https://github.com/):** The world's leading platform for version control and collaborative development.
