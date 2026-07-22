@@ -61,6 +61,7 @@ jobs:
           tag_name: "commit-${{ steps.vars.outputs.sha_short }}"
           name: "Build-${{ steps.vars.outputs.sha_short }}"
           generate_release_notes: true
+          make_latest: true
           files: |
             app/build/outputs/apk/${{ env.BUILD_TYPE }}/*.apk
         env:
