@@ -22,9 +22,6 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
       - name: Build APKs
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -34,11 +31,11 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > my-upload-key.jks
             export KEYSTORE_PATH=$(pwd)/my-upload-key.jks
-            ./gradlew assembleRelease
+            gradle assembleRelease
             echo "BUILD_TYPE=release" >> $GITHUB_ENV
           else
             echo "No keystore secret found, building Debug APK instead..."
-            ./gradlew assembleDebug
+            gradle assembleDebug
             echo "BUILD_TYPE=debug" >> $GITHUB_ENV
           fi
 
