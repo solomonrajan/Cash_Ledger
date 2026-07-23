@@ -58,9 +58,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "commit-${{ steps.vars.outputs.sha_short }}"
-          name: "Build-${{ steps.vars.outputs.sha_short }}"
-          generate_release_notes: true
+          tag_name: "v000.01"
+          name: "Alpha Build v000.01"
+          body_path: CHANGELOG.md
+          generate_release_notes: false
           make_latest: true
           files: |
             app/build/outputs/apk/**/*.apk
