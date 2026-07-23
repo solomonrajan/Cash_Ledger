@@ -9,12 +9,13 @@
 | ---------------------------------------------------------------------------------------------- |
 | [🌟 1. Introduction](#1-introduction)                                                          |
 | [📱 2. App Details: What is Cash Ledger?](#2-app-details-what-is-cash-ledger)                  |
-| [👥 3. Target Demographic: For Whom It Is Useful](#3-target-demographic-for-whom-it-is-useful) |
-| [🌳 4. Source Code Tree](#4-source-code-tree)                                                  |
-| [📥 5. Download](#5-download)                                                                  |
-| [💻 6. Run Locally](#6-run-locally)                                                            |
-| [👨‍💻 7. Developer Notes](#7-developer-notes)                                                    |
-| [🏆 8. Credits](#8-credits)                                                                    |
+| [📸 3. Screenshots](#3-screenshots)                                                            |
+| [👥 4. Target Demographic: For Whom It Is Useful](#4-target-demographic-for-whom-it-is-useful) |
+| [🌳 5. Source Code Tree](#5-source-code-tree)                                                  |
+| [📥 6. Download](#6-download)                                                                  |
+| [💻 7. Run Locally](#7-run-locally)                                                            |
+| [👨‍💻 8. Developer Notes](#8-developer-notes)                                                    |
+| [🏆 9. Credits](#9-credits)                                                                    |
 
 ## 🌟 1. Introduction
 
@@ -24,7 +25,26 @@ Welcome to Cash Ledger, the next-generation ecosystem for your modern lifestyle.
 
 Here are all the details about the app. Cash Ledger is an advanced, high-performance Android application designed to track, manage, and elevate your monetary transactions. Built with cutting-edge technologies, it provides a seamless and futuristic user experience for all your monetary operations.
 
-## 👥 3. Target Demographic: For Whom It Is Useful
+## 📸 3. Screenshots
+
+Here is a glimpse of the Cash Ledger application screens:
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="app/src/test/screenshots/greeting.png" width="200" alt="Greeting Screen"/><br/><b>Greeting Screen</b></td>
+      <td align="center"><img src="assets/screenshots/dashboard.png" width="200" alt="Dashboard Screen"/><br/><b>Dashboard Screen</b></td>
+      <td align="center"><img src="assets/screenshots/add_transaction.png" width="200" alt="Add Transaction Screen"/><br/><b>Add Transaction</b></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="assets/screenshots/categories.png" width="200" alt="Categories Screen"/><br/><b>Categories Screen</b></td>
+      <td align="center"><img src="assets/screenshots/settings.png" width="200" alt="Settings Screen"/><br/><b>Settings Screen</b></td>
+      <td align="center"><img src="assets/screenshots/initial_setup.png" width="200" alt="Initial Setup Screen"/><br/><b>Initial Setup</b></td>
+    </tr>
+  </table>
+</div>
+
+## 👥 4. Target Demographic: For Whom It Is Useful
 
 This application is purposefully built for:
 
@@ -32,7 +52,7 @@ This application is purposefully built for:
 - **Tech-Savvy Individuals:** Looking for a modern, sleek interface.
 - **Small Business Owners:** Seeking an edge in everyday monetary management.
 
-## 🌳 4. Source Code Tree
+## 🌳 5. Source Code Tree
 
 ```text
 Cash Ledger/
@@ -50,13 +70,13 @@ Cash Ledger/
 └── settings.gradle.kts
 ```
 
-## 📥 5. Download
+## 📥 6. Download
 
 You can download the latest version of Cash Ledger directly from our repository:
 
 [<img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" width="200">](https://github.com/solomonrajan/Cash_Ledger/releases)
 
-## 💻 6. Run Locally
+## 💻 7. Run Locally
 
 **Prerequisites:** [Android Studio](https://developer.android.com/studio)
 
@@ -67,13 +87,13 @@ You can download the latest version of Cash Ledger directly from our repository:
 5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
 6. Run the app on an emulator or physical device.
 
-## 👨‍💻 7. Developer Notes
+## 👨‍💻 8. Developer Notes
 
 - **Language:** Kotlin (Android)
 - **Developer:** Solomon Rajan from Kerala
 - **Note:** This is basically an initial vibe code app, future releases will try to implement more options.
 
-## 🏆 8. Credits
+## 🏆 9. Credits
 
 This project was made possible with the help of the following amazing tools, platforms, and technologies:
 
