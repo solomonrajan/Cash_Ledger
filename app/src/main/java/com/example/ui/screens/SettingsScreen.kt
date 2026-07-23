@@ -54,7 +54,7 @@ fun SettingsScreen(
     onReRunSetup: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val prefsManager = remember { UserPreferencesManager(context) }
+    val prefsManager = remember { UserPreferencesManager.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
     var backupStatus by remember { mutableStateOf("Ready") }
     var isBackingUp by remember { mutableStateOf(false) }
@@ -155,10 +155,10 @@ fun SettingsScreen(
             }
 
             // Google Pixel Profile / Account Hero Card
-            ElevatedCard(
+            Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.elevatedCardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             ) {

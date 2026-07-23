@@ -67,7 +67,7 @@ object CurrencyData {
     )
 }
 
-class UserPreferencesManager(context: Context) {
+class UserPreferencesManager private constructor(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("app_user_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
 
@@ -142,6 +142,13 @@ class UserPreferencesManager(context: Context) {
     }
 
     companion object {
+        @Volatile private var instance: UserPreferencesManager? = null
+        fun getInstance(context: Context): UserPreferencesManager {
+            return instance ?: synchronized(this) {
+                instance ?: UserPreferencesManager(context.applicationContext).also { instance = it }
+            }
+        }
+        
         fun defaultAccounts(): List<AccountItem> = listOf(
             AccountItem("1", "Cash", "LocalAtm"),
             AccountItem("2", "Bank Account", "AccountBalance"),

@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -67,7 +69,7 @@ fun DashboardScreen(
     onNavigateToCategories: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val prefsManager = remember { UserPreferencesManager(context) }
+    val prefsManager = remember { UserPreferencesManager.getInstance(context) }
     val transactions by viewModel.transactions.collectAsState()
     
     var searchQuery by remember { mutableStateOf("") }
@@ -77,16 +79,18 @@ fun DashboardScreen(
     var selectedTypeFilter by remember { mutableStateOf("All") }
     var selectedPaymentFilter by remember { mutableStateOf("All") }
     
+    val currencySymbol = remember(prefsManager) { prefsManager.currencySymbol }
+
     val filteredTransactions = remember(transactions, searchQuery, selectedDateFilter, selectedTypeFilter, selectedPaymentFilter) {
         val now = Calendar.getInstance()
+        val cal = Calendar.getInstance()
+        val lastMonth = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
+        
         transactions.filter { tx ->
-            val cal = Calendar.getInstance().apply { timeInMillis = tx.transaction.dateMillis }
+            cal.timeInMillis = tx.transaction.dateMillis
             val matchesDate = when (selectedDateFilter) {
                 "This Month" -> cal.get(Calendar.YEAR) == now.get(Calendar.YEAR) && cal.get(Calendar.MONTH) == now.get(Calendar.MONTH)
-                "Last Month" -> {
-                    val lastMonth = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
-                    cal.get(Calendar.YEAR) == lastMonth.get(Calendar.YEAR) && cal.get(Calendar.MONTH) == lastMonth.get(Calendar.MONTH)
-                }
+                "Last Month" -> cal.get(Calendar.YEAR) == lastMonth.get(Calendar.YEAR) && cal.get(Calendar.MONTH) == lastMonth.get(Calendar.MONTH)
                 else -> true
             }
             
@@ -97,10 +101,10 @@ fun DashboardScreen(
             }
             
             val paymentMethod = tx.transaction.paymentMethod
-            
             val matchesPayment = if (selectedPaymentFilter == "All") true else paymentMethod == selectedPaymentFilter
             
-            val matchesSearch = tx.category.name.contains(searchQuery, ignoreCase = true) ||
+            val matchesSearch = searchQuery.isBlank() ||
+                    tx.category.name.contains(searchQuery, ignoreCase = true) ||
                     tx.transaction.title.contains(searchQuery, ignoreCase = true) ||
                     tx.transaction.description.contains(searchQuery, ignoreCase = true) ||
                     tx.transaction.amount.toString().contains(searchQuery)
@@ -109,15 +113,35 @@ fun DashboardScreen(
         }
     }
     
-    val balance = filteredTransactions.sumOf { 
-        when (it.transaction.type) {
-            TransactionType.INCOME -> it.transaction.amount
-            TransactionType.EXPENSE -> -it.transaction.amount
-            TransactionType.TRANSFER -> 0.0
+    val (balance, income, expense) = remember(filteredTransactions) {
+        var b = 0.0
+        var inc = 0.0
+        var exp = 0.0
+        for (item in filteredTransactions) {
+            val amt = item.transaction.amount
+            when (item.transaction.type) {
+                TransactionType.INCOME -> {
+                    b += amt
+                    inc += amt
+                }
+                TransactionType.EXPENSE -> {
+                    b -= amt
+                    exp += amt
+                }
+                TransactionType.TRANSFER -> {}
+            }
+        }
+        Triple(b, inc, exp)
+    }
+
+    val groupedTransactions = remember(filteredTransactions) {
+        val dateFormatter = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
+        val cal = Calendar.getInstance()
+        filteredTransactions.groupBy { tx ->
+            cal.timeInMillis = tx.transaction.dateMillis
+            dateFormatter.format(cal.time)
         }
     }
-    val income = filteredTransactions.filter { it.transaction.type == TransactionType.INCOME }.sumOf { it.transaction.amount }
-    val expense = filteredTransactions.filter { it.transaction.type == TransactionType.EXPENSE }.sumOf { it.transaction.amount }
     
     val formatter = NumberFormat.getCurrencyInstance()
 
@@ -130,9 +154,7 @@ fun DashboardScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = androidx.compose.foundation.shape.CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    tonalElevation = 6.dp,
-                    shadowElevation = 2.dp
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                 TextField(
                     value = searchQuery,
@@ -140,10 +162,45 @@ fun DashboardScreen(
                     placeholder = { Text(placeholderText) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     trailingIcon = {
+                        var filterExpanded by remember { mutableStateOf(false) }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { searchQuery = "" }) {
                                     Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                }
+                            }
+                            Box {
+                                IconButton(onClick = { filterExpanded = true }) {
+                                    Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                                }
+                                DropdownMenu(
+                                    expanded = filterExpanded,
+                                    onDismissRequest = { filterExpanded = false },
+                                    modifier = Modifier.defaultMinSize(minWidth = 200.dp)
+                                ) {
+                                    Text("Date", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    listOf("All Time", "This Month", "Last Month").forEach { filter ->
+                                        DropdownMenuItem(
+                                            text = { Text(filter, fontWeight = if (selectedDateFilter == filter) FontWeight.Bold else FontWeight.Normal) },
+                                            onClick = { selectedDateFilter = filter; filterExpanded = false }
+                                        )
+                                    }
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                    Text("Type", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    listOf("All", "Income", "Expense").forEach { filter ->
+                                        DropdownMenuItem(
+                                            text = { Text(filter, fontWeight = if (selectedTypeFilter == filter) FontWeight.Bold else FontWeight.Normal) },
+                                            onClick = { selectedTypeFilter = filter; filterExpanded = false }
+                                        )
+                                    }
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                    Text("Payment Method", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    listOf("All", "Cash", "UPI", "Visa", "Mastercard", "Rupay").forEach { filter ->
+                                        DropdownMenuItem(
+                                            text = { Text(filter, fontWeight = if (selectedPaymentFilter == filter) FontWeight.Bold else FontWeight.Normal) },
+                                            onClick = { selectedPaymentFilter = filter; filterExpanded = false }
+                                        )
+                                    }
                                 }
                             }
                             IconButton(onClick = onNavigateToSettings) {
@@ -195,84 +252,7 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
             
-            item {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        var dateExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            FilterChip(
-                                selected = selectedDateFilter != "All Time",
-                                onClick = { dateExpanded = true },
-                                label = { Text(selectedDateFilter) },
-                                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                                shape = androidx.compose.foundation.shape.CircleShape,
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer)
-                            )
-                            DropdownMenu(
-                                expanded = dateExpanded, 
-                                onDismissRequest = { dateExpanded = false },
-                                shape = RoundedCornerShape(16.dp),
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer
-                            ) {
-                                listOf("All Time", "This Month", "Last Month").forEach { filter ->
-                                    DropdownMenuItem(text = { Text(filter) }, onClick = { selectedDateFilter = filter; dateExpanded = false })
-                                }
-                            }
-                        }
-                    }
-                    item {
-                        var typeExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            FilterChip(
-                                selected = selectedTypeFilter != "All",
-                                onClick = { typeExpanded = true },
-                                label = { Text(if (selectedTypeFilter == "All") "Type" else selectedTypeFilter) },
-                                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                                shape = androidx.compose.foundation.shape.CircleShape,
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer)
-                            )
-                            DropdownMenu(
-                                expanded = typeExpanded, 
-                                onDismissRequest = { typeExpanded = false },
-                                shape = RoundedCornerShape(16.dp),
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer
-                            ) {
-                                listOf("All", "Income", "Expense").forEach { filter ->
-                                    DropdownMenuItem(text = { Text(filter) }, onClick = { selectedTypeFilter = filter; typeExpanded = false })
-                                }
-                            }
-                        }
-                    }
-                    item {
-                        var paymentExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            FilterChip(
-                                selected = selectedPaymentFilter != "All",
-                                onClick = { paymentExpanded = true },
-                                label = { Text(if (selectedPaymentFilter == "All") "Payment" else selectedPaymentFilter) },
-                                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                                shape = androidx.compose.foundation.shape.CircleShape,
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer)
-                            )
-                            DropdownMenu(
-                                expanded = paymentExpanded, 
-                                onDismissRequest = { paymentExpanded = false },
-                                shape = RoundedCornerShape(16.dp),
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer
-                            ) {
-                                listOf("All", "Cash", "UPI", "Visa", "Mastercard", "Rupay").forEach { filter ->
-                                    DropdownMenuItem(text = { Text(filter) }, onClick = { selectedPaymentFilter = filter; paymentExpanded = false })
-                                }
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+
 
             item {
                 // Sleek & Compact Net Worth Summary
@@ -421,196 +401,182 @@ fun DashboardScreen(
                     }
                 }
             } else {
-                val groupedTransactions = filteredTransactions.groupBy { tx ->
-                    val cal = Calendar.getInstance().apply { timeInMillis = tx.transaction.dateMillis }
-                    SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(cal.time)
-                }
-                
                 groupedTransactions.forEach { (date, txs) ->
-                    item {
+                    item(key = "header_$date") {
                         Text(
                             text = date,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
-                            fontFamily = GoogleSansCode,
                             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp)
                         )
-                        ElevatedCard(
+                    }
+                    itemsIndexed(
+                        items = txs,
+                        key = { _, tx -> tx.transaction.id }
+                    ) { index, tx ->
+                        val isFirst = index == 0
+                        val isLast = index == txs.size - 1
+                        val shape = when {
+                            isFirst && isLast -> RoundedCornerShape(24.dp)
+                            isFirst -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                            isLast -> RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                            else -> RoundedCornerShape(0.dp)
+                        }
+                        
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.elevatedCardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                            ),
-                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+                            shape = shape,
+                            color = MaterialTheme.colorScheme.surfaceContainer
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateContentSize()
-                            ) {
-                                txs.forEachIndexed { index, tx ->
-                                    TransactionRowItem(tx = tx)
-                                    if (index < txs.size - 1) {
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                                            modifier = Modifier.padding(start = 80.dp, end = 16.dp)
-                                        )
-                                    }
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                TransactionRowItem(tx = tx, currencySymbol = currencySymbol)
+                                if (!isLast) {
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                        modifier = Modifier.padding(start = 72.dp, end = 16.dp)
+                                    )
                                 }
                             }
                         }
+                    }
+                    item(key = "spacer_$date") {
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
         }
     }
-}@Composable
-fun RowScope.TransactionItemContent(tx: TransactionWithCategory, showDate: Boolean = false) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val prefsManager = remember { UserPreferencesManager(context) }
-    val icon = CategoryIcons.getIcon(tx.category.iconName)
+}
 
-    val categoryColor = Color(tx.category.color)
-    val iconBgColor = categoryColor.copy(alpha = 0.2f)
-    val iconColor = categoryColor
+@Composable
+fun TransactionItemContent(
+    tx: TransactionWithCategory, 
+    showDate: Boolean = false, 
+    currencySymbol: String = "₹",
+    onClick: () -> Unit = {}
+) {
+    val icon = remember(tx.category.iconName) { CategoryIcons.getIcon(tx.category.iconName) }
+    val categoryColor = remember(tx.category.color) { Color(tx.category.color) }
+    val iconBgColor = remember(categoryColor) { categoryColor.copy(alpha = 0.2f) }
 
-    Box(
-        modifier = Modifier
-            .size(44.dp)
-            .background(iconBgColor, CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
+    val title = tx.transaction.title.ifBlank { tx.category.name }
+    val paymentMethod = tx.transaction.paymentMethod
+    val typeStr = remember(tx.category.type) {
+        tx.category.type.name.lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
-    Spacer(modifier = Modifier.width(14.dp))
-    Column(modifier = Modifier.weight(1f)) {
-        Text(tx.category.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-        val title = tx.transaction.title
-        val paymentMethod = tx.transaction.paymentMethod
-        
-        val desc = if (title.isNotBlank()) "${tx.category.type.name.lowercase(Locale.getDefault())} • $title" else tx.category.type.name.lowercase(Locale.getDefault())
-        Text(
-            desc.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, 
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            val formatStr = if (showDate) "MMM dd, yyyy • hh:mm a" else "hh:mm a"
-            val timeStr = SimpleDateFormat(formatStr, Locale.getDefault()).format(Date(tx.transaction.dateMillis))
-            Text(timeStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f), fontFamily = GoogleSansCode)
-            
+    val timeStr = remember(tx.transaction.dateMillis, showDate) {
+        val formatStr = if (showDate) "MMM dd, yyyy • hh:mm a" else "hh:mm a"
+        SimpleDateFormat(formatStr, Locale.getDefault()).format(Date(tx.transaction.dateMillis))
+    }
+    val formattedAmount = remember(tx.transaction.amount, currencySymbol) {
+        CurrencyUtils.formatAmount(tx.transaction.amount, currencySymbol)
+    }
+
+    androidx.compose.material3.ListItem(
+        modifier = Modifier.clickable { onClick() },
+        colors = androidx.compose.material3.ListItemDefaults.colors(
+            containerColor = Color.Transparent
+        ),
+        leadingContent = {
             Box(
                 modifier = Modifier
-                    .background(categoryColor.copy(alpha = 0.15f), CircleShape)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .size(48.dp)
+                    .background(iconBgColor, CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "#${tx.category.name.lowercase(Locale.getDefault()).replace(" ", "")}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = categoryColor,
-                    fontWeight = FontWeight.Bold
-                )
+                Icon(icon, contentDescription = null, tint = categoryColor, modifier = Modifier.size(24.dp))
             }
-            
-            if (paymentMethod.isNotBlank()) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f)
+        },
+        headlineContent = {
+            Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+        },
+        supportingContent = {
+            Column(modifier = Modifier.padding(top = 4.dp)) {
+                Text(
+                    "$typeStr • ${tx.category.name}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = categoryColor,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically, 
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        val pmIcon = when (paymentMethod) {
-                            "Visa", "Mastercard", "Rupay", "Card" -> Icons.Default.CreditCard
-                            "UPI" -> Icons.Default.Send
-                            "Cash" -> Icons.Default.Payments
-                            "Bank", "Bank Transfer" -> Icons.Default.AccountBalance
-                            "Wallet" -> Icons.Default.AccountBalanceWallet
-                            else -> Icons.Default.Payments
+                    Text(timeStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                    if (paymentMethod.isNotBlank()) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                val pmIcon = when (paymentMethod) {
+                                    "Visa", "Mastercard", "Rupay", "Card" -> Icons.Default.CreditCard
+                                    "UPI" -> Icons.Default.Send
+                                    "Cash" -> Icons.Default.Payments
+                                    "Bank", "Bank Transfer" -> Icons.Default.AccountBalance
+                                    "Wallet" -> Icons.Default.AccountBalanceWallet
+                                    else -> Icons.Default.Payments
+                                }
+                                Icon(
+                                    imageVector = pmIcon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = paymentMethod,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
-                        Icon(
-                            imageVector = pmIcon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = paymentMethod,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
-                        )
                     }
                 }
             }
-        }
-    }
-    Text(
-        CurrencyUtils.formatAmount(tx.transaction.amount, prefsManager.currencySymbol),
-        color = when (tx.transaction.type) {
-            TransactionType.INCOME -> com.example.ui.theme.IncomeGreen
-            TransactionType.EXPENSE -> com.example.ui.theme.ExpenseRed
-            TransactionType.TRANSFER -> Color(0xFF2196F3)
         },
-        fontWeight = FontWeight.Bold,
-        style = MaterialTheme.typography.bodyLarge,
-        fontFamily = GoogleSansCode
+        trailingContent = {
+            Text(
+                formattedAmount,
+                color = when (tx.transaction.type) {
+                    TransactionType.INCOME -> com.example.ui.theme.IncomeGreen
+                    TransactionType.EXPENSE -> com.example.ui.theme.ExpenseRed
+                    TransactionType.TRANSFER -> Color(0xFF2196F3)
+                },
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontFamily = GoogleSansCode
+            )
+        }
     )
 }
 
 @Composable
-fun TransactionRowItem(tx: TransactionWithCategory) {
+fun TransactionRowItem(tx: TransactionWithCategory, currencySymbol: String = "₹") {
     var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
         TransactionDetailsDialog(tx = tx, onDismiss = { showDialog = false }, onEdit = { /* TODO */ })
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showDialog = true }
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .animateContentSize(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TransactionItemContent(tx = tx)
-    }
+    TransactionItemContent(tx = tx, currencySymbol = currencySymbol, onClick = { showDialog = true })
 }
 
-@Composable
-fun TransactionItem(tx: TransactionWithCategory) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
-    ) {
-        TransactionRowItem(tx = tx)
-    }
-}
+
 
 @Composable
 fun TransactionDetailsDialog(tx: TransactionWithCategory, onDismiss: () -> Unit, onEdit: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val prefsManager = remember { UserPreferencesManager(context) }
+    val prefsManager = remember { UserPreferencesManager.getInstance(context) }
     val timeFormatter = SimpleDateFormat("EEEE, dd MMMM yyyy • hh:mm a", Locale.getDefault())
     val isIncome = tx.category.type == TransactionType.INCOME
     val isTransfer = tx.category.type == TransactionType.TRANSFER

@@ -50,7 +50,7 @@ fun InitialSetupScreen(
     onSetupComplete: () -> Unit
 ) {
     val context = LocalContext.current
-    val prefsManager = remember { UserPreferencesManager(context) }
+    val prefsManager = remember { UserPreferencesManager.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
 
     var currentStep by remember { mutableIntStateOf(1) }

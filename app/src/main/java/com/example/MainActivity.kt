@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
-            val prefsManager = remember(context) { UserPreferencesManager(context) }
+            val prefsManager = remember(context) { UserPreferencesManager.getInstance(context) }
             val themeMode by prefsManager.themeModeFlow.collectAsState()
             val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
             val useDarkTheme = when (themeMode) {

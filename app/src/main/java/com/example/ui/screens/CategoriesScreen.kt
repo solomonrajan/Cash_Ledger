@@ -102,6 +102,10 @@ fun CategoriesScreen(
         if (filterType == null) rootCats else rootCats.filter { it.type == filterType }
     }
 
+    val subCategoriesByParent = remember(categories) {
+        categories.filter { it.parentId != null }.groupBy { it.parentId }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -137,10 +141,10 @@ fun CategoriesScreen(
         ) {
             // New Category Card
             item {
-                ElevatedCard(
+                Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.elevatedCardColors(
+                    colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     )
                 ) {
@@ -532,21 +536,12 @@ fun CategoriesScreen(
 
             // Category List with Subcategories
             items(filteredMainCategories, key = { it.id }) { cat ->
-                var isVisible by remember { mutableStateOf(false) }
-                LaunchedEffect(cat.id) {
-                    isVisible = true
-                }
-                val subCats = categories.filter { it.parentId == cat.id }
-
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(animationSpec = tween(300)) + slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(300))
-                ) {
-                    val catColor = Color(cat.color)
-                    ElevatedCard(
+                val subCats = subCategoriesByParent[cat.id] ?: emptyList()
+                val catColor = remember(cat.color) { Color(cat.color) }
+                Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.elevatedCardColors(
+                        colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer
                         )
                     ) {
@@ -698,7 +693,6 @@ fun CategoriesScreen(
                             }
                         }
                     }
-                }
             }
         }
     }
